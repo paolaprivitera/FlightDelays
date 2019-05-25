@@ -20,6 +20,7 @@ import org.jgrapht.traverse.BreadthFirstIterator;
 import it.polito.tdp.extflightdelays.db.ExtFlightDelaysDAO;
 
 public class Model {
+	// Grafo semplice, non orientato e pesato
 	SimpleWeightedGraph<Airport,DefaultWeightedEdge> grafo;
 	Map<Integer,Airport> aIdMap;
 	Map<Airport,Airport> visita;
@@ -31,7 +32,7 @@ public class Model {
 		aIdMap = new HashMap<Integer,Airport>();
 		visita = new HashMap<Airport,Airport>();
 		dao = new ExtFlightDelaysDAO();
-		dao.loadAllAirports(aIdMap);
+		dao.loadAllAirports(aIdMap); // popolo la mappa
 	}
 	
 	public Collection<Airport> getAirports(){
@@ -40,12 +41,12 @@ public class Model {
 	
 	public void creaGrafo(int distanzaMedia) {
 		
-		//Aggiungere i vertici
+		// Aggiungo i vertici
 		Graphs.addAllVertices(grafo, aIdMap.values());
 		
 		for(Rotta rotta : dao.getRotte(aIdMap, distanzaMedia)) {
-			//controllo se esiste già un arco
-			//se esiste, aggiorno il peso
+			// Controllo se esiste gia' un arco
+			// se esiste, aggiorno il peso (perche' il grafo non e' orientato)
 			DefaultWeightedEdge edge = grafo.getEdge(rotta.getPartenza(), rotta.getDestinazione());
 			if(edge == null) {
 				Graphs.addEdge(grafo, rotta.getPartenza(), rotta.getDestinazione(), rotta.getDistanzaMedia());
@@ -63,12 +64,15 @@ public class Model {
 		System.out.println("Archi: " + grafo.edgeSet().size());
 	}
 	
+	// Verificare se e' possibile raggiungere l'aeroporto di arrivo a partire da quello di partenza
+	// ---> VISITA DEL GRAFO
 	public Boolean testConnessione(Integer a1, Integer a2) {
 		Set<Airport> visitati = new HashSet<Airport>();
 		Airport partenza = aIdMap.get(a1);
 		Airport destinazione = aIdMap.get(a2);
 		System.out.println("Testo connessione tra " + partenza + " e " + destinazione);
-		BreadthFirstIterator<Airport, DefaultWeightedEdge> it = new BreadthFirstIterator<>(this.grafo,partenza);
+		// Scelgo visita in ampiezza (perche' in questo modo trovo il percorso con il numero minimo di archi)
+		BreadthFirstIterator<Airport, DefaultWeightedEdge> it = new BreadthFirstIterator<>(this.grafo, partenza);
 		
 		while (it.hasNext())
 			visitati.add(it.next());
@@ -85,22 +89,19 @@ public class Model {
 		Airport partenza = aIdMap.get(a1);
 		Airport destinazione = aIdMap.get(a2);
 		System.out.println("Cerco percorso tra " + partenza + " e " + destinazione);
-		BreadthFirstIterator<Airport, DefaultWeightedEdge> it = new BreadthFirstIterator<>(this.grafo,partenza);
+		BreadthFirstIterator<Airport, DefaultWeightedEdge> it = new BreadthFirstIterator<>(this.grafo, partenza);
 		
-		visita.put(partenza, null);
+		visita.put(partenza, null); // aggiungo il nodo radice
 		
-		it.addTraversalListener(new TraversalListener<Airport,DefaultWeightedEdge>(){
+		// Associo il Listener all'Iterator
+		it.addTraversalListener(new TraversalListener<Airport,DefaultWeightedEdge>(){ // classe anonima
 
 			@Override
 			public void connectedComponentFinished(ConnectedComponentTraversalEvent arg0) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
 			public void connectedComponentStarted(ConnectedComponentTraversalEvent arg0) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
@@ -110,7 +111,8 @@ public class Model {
 				
 				if(!visita.containsKey(destinazione) && visita.containsKey(sorgente)) {
 					visita.put(destinazione, sorgente);
-				} else if(!visita.containsKey(sorgente) && visita.containsKey(destinazione)){
+				}
+				else if(!visita.containsKey(sorgente) && visita.containsKey(destinazione)){
 					visita.put(sorgente, destinazione);
 				}
 
@@ -118,14 +120,10 @@ public class Model {
 
 			@Override
 			public void vertexFinished(VertexTraversalEvent<Airport> arg0) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
 			public void vertexTraversed(VertexTraversalEvent<Airport> arg0) {
-				// TODO Auto-generated method stub
-				
 			}
 			
 		});
@@ -134,7 +132,7 @@ public class Model {
 			it.next();
 		
 		if(!visita.containsKey(partenza) || !visita.containsKey(destinazione)) {
-			return null;
+			return null; // vuol dire che gli aeroporti non sono collegati
 		}
 		
 		Airport step = destinazione;
@@ -142,7 +140,7 @@ public class Model {
 			percorso.add(step);
 			step = visita.get(step);
 		}
-		percorso.add(step);
+		percorso.add(step); // per aggiungere l'ultimo nodo, cioe' la partenza (o sorgente)
 		
 		return percorso;
 		

@@ -1,13 +1,11 @@
 package it.polito.tdp.extflightdelays.model;
-
+// Classe in cui metto le informazioni fornite dalla query
 public class Rotta {
 	private Airport partenza;
 	private Airport destinazione;
 	private double distanzaMedia;
 	
-	
 	public Rotta(Airport partenza, Airport destinazione, double distanzaMedia) {
-		super();
 		this.partenza = partenza;
 		this.destinazione = destinazione;
 		this.distanzaMedia = distanzaMedia;
@@ -63,7 +61,7 @@ public class Rotta {
 		return true;
 	}
 	
-	
+	// Possiamo avere una sola rotta tra due aeroporti
 	
 	
 }
